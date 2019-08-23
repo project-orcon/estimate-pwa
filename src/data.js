@@ -18,8 +18,8 @@ export default {
     },
     {
       name: "Napping",
-      minEstimate: 30,
-      maxEstimate: 80,
+      minEstimate: 1,
+      maxEstimate: 2,
       completed: false,
       active:false,
       currentTime: 0

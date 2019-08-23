@@ -25,7 +25,7 @@
                   </v-list-item-avatar>
                 </v-list-item>
                 <v-card-actions>
-                  <v-btn text>Elapsed Time: {{item.currentTime}} MIN</v-btn>
+                  <v-btn text>Elapsed Time: {{formatSeconds(item.currentTime)}}</v-btn>
                   <v-btn
                     fab
                     class="white--text"
@@ -36,7 +36,7 @@
                     <v-icon>{{item.active? "pause":"play_arrow"}}</v-icon>
                   </v-btn>
                 </v-card-actions>
-                <v-progress-linear value="item.currentTime"></v-progress-linear>
+                <v-progress-linear :value="formatProgress(item.currentTime,item.maxEstimate)"></v-progress-linear>
               </v-card>
             </v-col>
           </v-row>
@@ -50,6 +50,26 @@
 import fakeData from "../data.js";
 export default {
   name: "home",
+  mounted() {
+    window.setInterval(() => {
+      //every one second update all cards which are currently active.
+      this.tasks.forEach(function(x) {
+        if (x.active) {
+          x.currentTime++;
+        }
+      });
+    }, 1000);
+  },
+  methods: {
+    formatSeconds: function(sec) {
+      //format into M:SS 
+      return Math.floor(sec / 60) + ":" + ("0" + (sec % 60)).slice(-2);
+    },
+    formatProgress: function (sec,maxEstimateMinutes) {
+      //format progress bar (100 = 100%)
+      return sec/(maxEstimateMinutes*60)*100;
+    }
+  },
   data() {
     return {
       tasks: fakeData.data
