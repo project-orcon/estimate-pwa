@@ -6,7 +6,7 @@
       </v-toolbar-title>
       <v-spacer></v-spacer>
     </v-app-bar>
-    <v-content>
+    <v-content class="black">
       <router-view></router-view>
     </v-content>
   </v-app>
@@ -25,3 +25,8 @@ export default {
   })
 };
 </script>
+
+<style>
+
+
+</style>

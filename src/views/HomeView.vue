@@ -1,13 +1,19 @@
 <template>
-  <v-card>
-    <v-tabs background-color="white" color="deep-purple accent-4" right>
+  <div id="home">
+    <v-tabs color="primary accent-4" background-color="black" dark right>
       <v-tab>To Do</v-tab>
       <v-tab>Complete</v-tab>
       <v-tab-item v-for="n in 2" :key="n">
-        <v-container fluid>
-          <v-row>
-            <v-col v-for="(item,index) in tasks" :key="index" cols="12" md="4">
-              <v-card class="mx-auto" max-width="344" outlined>
+        <v-container class="black" fluid>
+          <v-row style="max-width:1100px;width:100%;margin:0 auto">
+            <v-col v-for="(item,index) in tasks" :key="index" cols="12" lg="4">
+              <v-card
+                class="mx-auto grey darken-4"
+                max-width="344"
+                flat
+                dark
+                style="border:1px solid green !important"
+              >
                 <v-list-item three-line>
                   <v-list-item-content>
                     <div class="overline mb-4">Task #{{index+1}}</div>
@@ -16,40 +22,170 @@
                     <v-list-item-subtitle>Max Estimate: {{item.maxEstimate}} MIN</v-list-item-subtitle>
                   </v-list-item-content>
                   <v-list-item-avatar>
-                    <v-btn text icon color="green">
+                    <v-btn text icon color="green" @click="complete(index)">
                       <v-icon>check</v-icon>
                     </v-btn>
-                    <v-btn text icon color="primary">
-                      <v-icon>more_vert</v-icon>
-                    </v-btn>
+                    <v-menu bottom left offset-y open-on-hover>
+                      <template v-slot:activator="{ on }">
+                        <v-btn color="primary" dark icon v-on="on">
+                          <v-icon>more_vert</v-icon>
+                        </v-btn>
+                      </template>
+                      <v-list dark class="grey darken-4">
+                        <v-list-item @click="edit(index)">
+                          <v-list-item-title>
+                            Edit Task
+                            <v-icon>edit</v-icon>
+                          </v-list-item-title>
+                        </v-list-item>
+                        <v-list-item @click="del(index)">
+                          <v-list-item-title>
+                            Delete Task
+                            <v-icon>delete</v-icon>
+                          </v-list-item-title>
+                        </v-list-item>
+                      </v-list>
+                    </v-menu>
                   </v-list-item-avatar>
                 </v-list-item>
                 <v-card-actions>
                   <v-btn text>Elapsed Time: {{formatSeconds(item.currentTime)}}</v-btn>
                   <v-btn
+                    elevation="0"
+                    absolute
+                    right
                     fab
-                    class="white--text"
+                    small
+                    dark
                     color="deep-purple"
                     @click="item.active=!item.active"
-                    style="margin-top:-40px; margin-left:75px"
+                    style="margin-top:-10px"
                   >
                     <v-icon>{{item.active? "pause":"play_arrow"}}</v-icon>
                   </v-btn>
                 </v-card-actions>
-                <v-progress-linear :value="formatProgress(item.currentTime,item.maxEstimate)"></v-progress-linear>
+                <v-progress-linear
+                  color="green"
+                  :value="formatProgress(item.currentTime,item.maxEstimate)"
+                ></v-progress-linear>
               </v-card>
             </v-col>
           </v-row>
         </v-container>
       </v-tab-item>
     </v-tabs>
-  </v-card>
+     <v-container fluid>
+       <v-row style="margin:0 auto">
+    <p class="eliza">TEXT TEXT TEXT</p>
+    <v-btn fab fixed bottom right color="primary" @click="dialog=!dialog">
+      <v-icon>add</v-icon>
+    </v-btn>
+    <v-overlay :opacity="0.9" v-model="dialog">
+      <v-dialog
+        v-model="dialog"
+        width="800"
+        dark
+        hide-overlay
+        transition="dialog-bottom-transition"
+        @click="dialog=false"
+      >
+        <new-task style="max-width:800px;" @saved="saveNew"></new-task>
+      </v-dialog>
+    </v-overlay>
+    <v-overlay :opacity="0.9" v-model="editDialog">
+      <v-dialog
+        v-model="editDialog"
+        width="800"
+        dark
+        hide-overlay
+        transition="dialog-bottom-transition"
+        @click="dialog=false"
+      >
+        <edit-task style="max-width:800px;" @saved="update" :data-object="currentTask"></edit-task>
+      </v-dialog>
+    </v-overlay>
+    <v-overlay :opacity="0.9" v-model="congratsDialog">
+    <v-dialog v-model="congratsDialog" hide-overlay width="400">
+      <v-card
+        width="400"
+        dark
+        hide-overlay
+        outline
+        class="grey darken-4 text-center"
+        style="border:1px solid green !important; padding:5px;"
+      >
+        <div class="green">
+          <lottie
+            :options="defaultOptions"
+            :height="200"
+            :width="200"
+            v-on:animCreated="handleAnimation"
+          />
+        </div>
+
+        <v-card-text class="white--text">Congratulations on meeting your estimate!!!</v-card-text>
+      </v-card>
+
+    </v-dialog>
+    </v-overlay>
+    <v-dialog v-model="failDialog" width="400">
+      <v-card
+        width="400px"
+        dark
+        outline
+        class="grey darken-4 text-center"
+        style="border:1px solid green !important; padding:5px"
+      >
+        <div class="green">
+          <lottie
+            :options="defaultOptions2"
+            :height="200"
+            :width="200"
+            v-on:animCreated="handleAnimation"
+          />
+        </div>
+        <v-card-text class="white--text">
+          You failed to meet your estimate.
+          <br />Try breaking your task up into smaller tasks.
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="congrats2Dialog" width="400">
+      <v-card
+        width="400px"
+        dark
+        outline
+        class="grey darken-4 text-center"
+        style="border:1px solid green !important; padding:5px"
+      >
+        <div class="green">
+          <lottie
+            :options="defaultOptions3"
+            :height="200"
+            :width="200"
+            v-on:animCreated="handleAnimation"
+          />
+        </div>
+        <v-card-text class="white--text">Another task completed! You're so productive!</v-card-text>
+      </v-card>
+    </v-dialog>
+    </v-row>
+    </v-container>
+  </div>
 </template>
 <script>
 // @ is an alias to /src
 import fakeData from "../data.js";
+import NewTask from "./NewView.vue";
+import EditTask from "./EditView.vue";
+import Lottie from "vue-lottie";
+import animationData from "../assets/claps.json";
+import animationData2 from "../assets/crying.json";
+import animationData3 from "../assets/typing.json";
+
 export default {
   name: "home",
+  components: { NewTask, EditTask, Lottie },
   mounted() {
     window.setInterval(() => {
       //every one second update all cards which are currently active.
@@ -61,19 +197,84 @@ export default {
     }, 1000);
   },
   methods: {
+    complete(index){
+      this.tasks[index].complete=true;
+      if (Math.random() < this.rewardFactor ){
+        if (Math.random() < 0.5){
+        this.congratsDialog=true;}
+        else {
+          this.failDialog=true;}
+        }
+    },
+    handleAnimation: function(anim) {
+      this.anim = anim;
+    },
+    saveNew: function(data) {
+      this.tasks.push(data);
+      this.dialog = false;
+    },
+    update: function(index, data) {
+      this.tasks[index] = data;
+      this.editDialog = false;
+    },
+    edit: function(index) {
+      this.currentTaskIndex = index;
+      this.currentTask = this.tasks[index];
+      this.editDialog = true;
+    },
+    del: function(index) {
+      this.tasks.splice(index, 1);
+    },
     formatSeconds: function(sec) {
-      //format into M:SS 
+      //format into M:SS
       return Math.floor(sec / 60) + ":" + ("0" + (sec % 60)).slice(-2);
     },
-    formatProgress: function (sec,maxEstimateMinutes) {
+    formatProgress: function(sec, maxEstimateMinutes) {
       //format progress bar (100 = 100%)
-      return sec/(maxEstimateMinutes*60)*100;
+      return (sec / (maxEstimateMinutes * 60)) * 100;
     }
   },
   data() {
     return {
-      tasks: fakeData.data
+      rewardFactor:0.45,
+      dialog: false,
+      editDialog: false,
+      congratsDialog:false,
+      congrats2Dialog:false,
+      failDialog:false,
+      tasks: fakeData.data,
+      currentTask: {},
+      currentTaskIndex: 0,
+
+      defaultOptions: { animationData: animationData },
+      animationSpeed: 1,
+
+      defaultOptions2: { animationData: animationData2 },
+      animationSpeed: 1,
+      defaultOptions3: { animationData: animationData3 },
+      animationSpeed: 1
     };
   }
 };
 </script>
+<style scoped>
+.v-list-item__title {
+  min-width: 80px;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+}
+
+.v-list-item__title .v-icon {
+  font-size: 14px;
+
+  float: right;
+}
+
+.eliza {
+  font-family: "Courier New";
+  //font-family: 'VT323', monospace;
+  color: green;
+  font-size: 20px;
+}
+</style>
