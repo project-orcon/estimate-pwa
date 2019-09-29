@@ -1,6 +1,6 @@
 <template>
   <div id="home">
-    <div class="white--text black"></div>
+    <div class="white--text black">{{fingerprint}}</div>
     <v-tabs color="primary accent-4" background-color="black" dark right style="min-height:100vh">
       <v-tab>To Do</v-tab>
       <v-tab>Complete</v-tab>
@@ -199,6 +199,7 @@ export default {
   name: "home",
   components: { NewTask, EditTask, Lottie },
   mounted() {
+    this.fingerprinting();
     this.lastTimeRecorded = Date.now();
     window.setInterval(() => {
       //every 200ms check how much time has passed since last time and add to seconds timers
@@ -214,9 +215,31 @@ export default {
     }, 200);
   },
   methods: {
+    fingerprinting() {
+      const Fingerprint2 = window.Fingerprint2;
+      var vueInstance=this;
+      if (window.requestIdleCallback) {
+        requestIdleCallback(() => {
+          Fingerprint2.get(function(components) {
+            console.log("hash is",components); // an array of components: {key: ..., value: ...}
+            var values = components.map(function (component) { return component.value })
+            vueInstance.fingerprint= Fingerprint2.x64hash128(values.join(''), 31)
+          });
+        });
+      } else {
+        setTimeout(function() {
+          Fingerprint2.get(function(components) {
+            console.log("hash is", components); // an array of components: {key: ..., value: ...}
+            var values = components.map(function (component) { return component.value })
+            vueInstance.fingerprint= Fingerprint2.x64hash128(values.join(''), 31)
+          });
+        }, 500);
+      }
+    },
     complete(id) {
       var index = this.tasks.findIndex(x => x.id == id);
       this.$set(this.tasks.find(x => x.id === index), "completed", true);
+      this.$set(this.tasks.find(x => x.id === index), "active", false);
       //check that the time taken for the task is less than the maximum Estimate
 
       if (this.rewardFactor < Math.random()) {
@@ -276,6 +299,7 @@ export default {
   },
   data() {
     return {
+      fingerprint:'',
       lastTimeRecorded: 0,
       rewardFactor: 0.45,
       dialog: false,
