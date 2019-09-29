@@ -13,6 +13,7 @@
         </v-form>
       </v-card-text>
       <v-card-actions class="d-flex justify-end">
+        <v-btn @click="save()">Save</v-btn>
       </v-card-actions>
     </v-card>
   </div>
@@ -79,6 +80,7 @@ export default {
     save() {
       this.$refs.form.validate();
       if (this.formValid == true) {
+        console.log("DOBJET IS ",this.dataObject)
         this.$emit("saved", this.dataObject);
       }
     }

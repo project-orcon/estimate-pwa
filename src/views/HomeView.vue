@@ -4,7 +4,7 @@
     <v-tabs color="primary accent-4" background-color="black" dark right style="min-height:100vh">
       <v-tab>To Do</v-tab>
       <v-tab>Complete</v-tab>
-      <v-tab-item v-for="n in [completedTasks,notCompletedTasks]" :key="n" class="black">
+      <v-tab-item v-for="(n,index) in [completedTasks,notCompletedTasks]" :key="index" class="black">
         <v-container fluid style="background-color:black">
           <v-row style="max-width:1100px;min-width:320px;width:100%;margin:0 auto" class="black">
             <v-col v-for="(item,index) in n" :key="item.id" cols="12" lg="4">
@@ -65,7 +65,7 @@
                     small
                     dark
                     color="deep-purple"
-                    @click="item.active=!item.active"
+                    @click="playOrPause(item.id)"
                     style="margin-top:-10px"
                     :disabled="item.completed ? true : false"
                   >
@@ -108,7 +108,7 @@
             transition="dialog-bottom-transition"
             @click="dialog=false"
           >
-            <edit-task style="max-width:800px;" @saved="update" :data-object="currentTask"></edit-task>
+            <edit-task style="max-width:800px;" @saved="update" :data-object="currentEstimate"></edit-task>
           </v-dialog>
         </v-overlay>
         <v-overlay :opacity="0.9" v-model="congratsDialog">
@@ -194,6 +194,7 @@ import Lottie from "vue-lottie";
 import animationData from "../assets/claps.json";
 import animationData2 from "../assets/crying.json";
 import animationData3 from "../assets/typing.json";
+import { estimatesCollection } from "../firebase";
 
 export default {
   name: "home",
@@ -206,79 +207,113 @@ export default {
       var TimeDiff = (Date.now() - this.lastTimeRecorded) / 1000;
       if (TimeDiff > 1) {
         this.lastTimeRecorded = Date.now();
-        this.tasks.forEach(function(x) {
+        this.estimates.forEach(function(x) {
           if (x.active) {
-            x.currentTime += Math.floor(TimeDiff);
+            var time = x.currentTime + Math.floor(TimeDiff);
+            estimatesCollection.doc(x.id).update({ currentTime: time });
           }
         });
       }
     }, 200);
   },
+  firestore() {
+    return {
+      estimates: estimatesCollection.orderBy("createdAt", "desc")
+    };
+  },
   methods: {
+    playOrPause(id) {
+      estimatesCollection
+        .doc(id)
+        .get()
+        .then(snapshot => {
+          const data = snapshot.data();
+          if (data.active) {
+            estimatesCollection.doc(id).update({ active: false });
+          } else {
+            estimatesCollection.doc(id).update({ active: true });
+          }
+        });
+    },
+    setFingerprint(components) {
+      console.log("hash is", components); // an array of components: {key: ..., value: ...}
+      var values = components.map(function(component) {
+        return component.value;
+      });
+      this.fingerprint = Fingerprint2.x64hash128(values.join(""), 31);
+      //this.estimates = this.estimates.where("user", "==", this.fingerprint);
+    },
     fingerprinting() {
       const Fingerprint2 = window.Fingerprint2;
-      var vueInstance=this;
+      var vueInstance = this;
       if (window.requestIdleCallback) {
         requestIdleCallback(() => {
           Fingerprint2.get(function(components) {
-            console.log("hash is",components); // an array of components: {key: ..., value: ...}
-            var values = components.map(function (component) { return component.value })
-            vueInstance.fingerprint= Fingerprint2.x64hash128(values.join(''), 31)
+            vueInstance.setFingerprint(components);
           });
         });
       } else {
         setTimeout(function() {
           Fingerprint2.get(function(components) {
-            console.log("hash is", components); // an array of components: {key: ..., value: ...}
-            var values = components.map(function (component) { return component.value })
-            vueInstance.fingerprint= Fingerprint2.x64hash128(values.join(''), 31)
+            vueInstance.setFingerprint(components);
           });
         }, 500);
       }
     },
     complete(id) {
-      var index = this.tasks.findIndex(x => x.id == id);
-      this.$set(this.tasks.find(x => x.id === index), "completed", true);
-      this.$set(this.tasks.find(x => x.id === index), "active", false);
+      estimatesCollection.doc(id).update({ completed: true, active: false });
       //check that the time taken for the task is less than the maximum Estimate
-
-      if (this.rewardFactor < Math.random()) {
-        if (
-          this.tasks[index].currentTime <=
-          this.tasks[index].maxEstimate * 60
-        ) {
-          if (0.5 < Math.random()) {
-            this.congratsDialog = true;
-          } else {
-            this.congrats2Dialog = true;
+      estimatesCollection
+        .doc(id)
+        .get()
+        .then(snapshot => {
+          const data = snapshot.data();
+          if (this.rewardFactor < Math.random()) {
+            if (data.currentTime <= data.maxEstimate * 60) {
+              if (0.5 < Math.random()) {
+                this.congratsDialog = true;
+              } else {
+                this.congrats2Dialog = true;
+              }
+            } else {
+              this.failDialog = true;
+            }
           }
-        } else {
-          this.failDialog = true;
-        }
-      }
+        });
     },
     handleAnimation: function(anim) {
       this.anim = anim;
     },
     saveNew: function(data) {
-      this.tasks.push(data);
+      estimatesCollection.add({
+        name: data.name,
+        minEstimate: data.minEstimate,
+        maxEstimate: data.maxEstimate,
+        completed: false,
+        active: false,
+        currentTime: 0,
+        createdAt: new Date(),
+        user: this.fingerprint
+      });
       this.dialog = false;
     },
-    update: function(id, data) {
-      var index = this.tasks.findIndex(x => x.id == id);
-      this.$set(this.tasks, index, data);
+    update: function(data) {
+      estimatesCollection.doc(this.currentEstimateId).update(data);
       this.editDialog = false;
     },
     edit: function(id) {
-      this.currentTaskIndex = this.tasks.findIndex(x => x.id == id);
-      this.currentTask = this.tasks[this.currentTaskIndex];
-      this.editDialog = true;
+      this.currentEstimateId = id;
+      estimatesCollection
+        .doc(id)
+        .get()
+        .then(snapshot => {
+          this.currentEstimate = snapshot.data();
+          this.editDialog = true;
+        });
+      console.log("EDIT ID IS", id);
     },
     del: function(id) {
-      console.log("id is", id);
-      var index = this.tasks.findIndex(x => x.id == id);
-      console.log("index is", index);
-      this.tasks.splice(index, 1);
+      estimatesCollection.doc(id).delete();
     },
     formatSeconds: function(sec) {
       //format into M:SS
@@ -291,15 +326,16 @@ export default {
   },
   computed: {
     completedTasks: function() {
-      return this.tasks.filter(x => x.completed == false);
+      return this.estimates.filter(x => x.completed == false);
     },
     notCompletedTasks: function() {
-      return this.tasks.filter(x => x.completed == true);
+      return this.estimates.filter(x => x.completed == true);
     }
   },
   data() {
     return {
-      fingerprint:'',
+      estimates: [],
+      fingerprint: "",
       lastTimeRecorded: 0,
       rewardFactor: 0.45,
       dialog: false,
@@ -308,8 +344,8 @@ export default {
       congrats2Dialog: false,
       failDialog: false,
       tasks: fakeData.data,
-      currentTask: {},
-      currentTaskIndex: 0,
+      currentEstimate: {},
+      currentEstimateId: 0,
 
       defaultOptions: { animationData: animationData },
       animationSpeed: 1,
