@@ -135,51 +135,51 @@
           </v-dialog>
         </v-overlay>
         <v-overlay :opacity="0.9" v-model="failDialog">
-        <v-dialog v-model="failDialog"  hide-overlay width="400">
-          <v-card
-            width="400px"
-            dark
-            outline
-            class="grey darken-4 text-center"
-            style="border:1px solid green !important; padding:5px"
-          >
-            <div class="green">
-              <lottie
-                :options="defaultOptions2"
-                :height="200"
-                :width="200"
-                v-on:animCreated="handleAnimation"
-              />
-            </div>
-            <br />
-            <v-card-text class="white--text">
-              You failed to meet your estimate.
-              <br />Try breaking your task up into smaller tasks.
-            </v-card-text>
-          </v-card>
-        </v-dialog>
+          <v-dialog v-model="failDialog" hide-overlay width="400">
+            <v-card
+              width="400px"
+              dark
+              outline
+              class="grey darken-4 text-center"
+              style="border:1px solid green !important; padding:5px"
+            >
+              <div class="green">
+                <lottie
+                  :options="defaultOptions2"
+                  :height="200"
+                  :width="200"
+                  v-on:animCreated="handleAnimation"
+                />
+              </div>
+              <br />
+              <v-card-text class="white--text">
+                You failed to meet your estimate.
+                <br />Try breaking your task up into smaller tasks.
+              </v-card-text>
+            </v-card>
+          </v-dialog>
         </v-overlay>
         <v-overlay :opacity="0.9" v-model="congrats2Dialog">
-        <v-dialog v-model="congrats2Dialog"  hide-overlay width="400">
-          <v-card
-            width="400px"
-            dark
-            outline
-            class="grey darken-4 text-center"
-            style="border:1px solid green !important; padding:5px"
-          >
-            <div class="green">
-              <lottie
-                :options="defaultOptions3"
-                :height="200"
-                :width="200"
-                v-on:animCreated="handleAnimation"
-              />
-            </div>
-            <br />
-            <v-card-text class="white--text">Another task completed! You're so productive!</v-card-text>
-          </v-card>
-        </v-dialog>
+          <v-dialog v-model="congrats2Dialog" hide-overlay width="400">
+            <v-card
+              width="400px"
+              dark
+              outline
+              class="grey darken-4 text-center"
+              style="border:1px solid green !important; padding:5px"
+            >
+              <div class="green">
+                <lottie
+                  :options="defaultOptions3"
+                  :height="200"
+                  :width="200"
+                  v-on:animCreated="handleAnimation"
+                />
+              </div>
+              <br />
+              <v-card-text class="white--text">Another task completed! You're so productive!</v-card-text>
+            </v-card>
+          </v-dialog>
         </v-overlay>
       </v-row>
     </v-container>
@@ -199,14 +199,19 @@ export default {
   name: "home",
   components: { NewTask, EditTask, Lottie },
   mounted() {
+    this.lastTimeRecorded = Date.now();
     window.setInterval(() => {
-      //every one second update all cards which are currently active.
-      this.tasks.forEach(function(x) {
-        if (x.active) {
-          x.currentTime++;
-        }
-      });
-    }, 1000);
+      //every 200ms check how much time has passed since last time and add to seconds timers
+      var TimeDiff = (Date.now() - this.lastTimeRecorded) / 1000;
+      if (TimeDiff > 1) {
+        this.lastTimeRecorded = Date.now();
+        this.tasks.forEach(function(x) {
+          if (x.active) {
+            x.currentTime += Math.floor(TimeDiff);
+          }
+        });
+      }
+    }, 200);
   },
   methods: {
     complete(id) {
@@ -271,6 +276,7 @@ export default {
   },
   data() {
     return {
+      lastTimeRecorded: 0,
       rewardFactor: 0.45,
       dialog: false,
       editDialog: false,
