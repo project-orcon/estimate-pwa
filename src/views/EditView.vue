@@ -9,14 +9,10 @@
             :schema="schema"
             :model="dataObject"
             :options="options"
-            @error="showError"
-            @change="showChange"
-            @input="showInput"
           />
         </v-form>
       </v-card-text>
       <v-card-actions class="d-flex justify-end">
-        <v-btn @click="save()">Save</v-btn>
       </v-card-actions>
     </v-card>
   </div>
@@ -32,6 +28,7 @@ export default {
   },
   data() {
     return {
+      cloneData: Object.assign({}, this.dataObject),
       schema: {
         type: "object",
         required: ["name", "minEstimate", "maxEstimate"],
@@ -71,7 +68,7 @@ export default {
       options: {
         debug: false,
         disableAll: false,
-        autoFoldObjects: true
+        autoFoldObjects: false
       }
     };
   },
@@ -84,15 +81,6 @@ export default {
       if (this.formValid == true) {
         this.$emit("saved", this.dataObject);
       }
-    },
-    showError(err) {
-      window.alert(err);
-    },
-    showChange(e) {
-      console.log('"change" event', e);
-    },
-    showInput(e) {
-      console.log('"input" event', e);
     }
   }
 };
