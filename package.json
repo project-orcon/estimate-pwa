@@ -11,6 +11,7 @@
     "@koumoul/vuetify-jsonschema-form": "^0.28.3",
     "core-js": "^2.6.5",
     "firebase": "^7.0.0",
+    "idb": "^4.0.4",
     "register-service-worker": "^1.6.2",
     "vue": "^2.6.10",
     "vue-lottie": "^0.2.1",

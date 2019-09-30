@@ -217,12 +217,21 @@ import animationData from "../assets/claps.json";
 import animationData2 from "../assets/crying.json";
 import animationData3 from "../assets/typing.json";
 import animationChecklist from "../assets/checklist.json";
-import { estimatesCollection } from "../firebase";
+import { db, estimatesCollection } from "../firebase";
+import { openDB } from "idb";
 
 export default {
   name: "home",
   components: { NewTask, EditTask, Lottie },
   mounted() {
+    //bind firestore
+
+    var firebaseConnectedPromise = this.$bind(
+      "estimates",
+      db.collection("estimates")
+    );
+    //.then(() => this.loaded = true);
+
     this.fingerprinting();
     this.lastTimeRecorded = Date.now();
     window.setInterval(() => {
@@ -238,12 +247,49 @@ export default {
         });
       }
     }, 200);
+
+    //set up indexDBDatabase - try adding an estimate object to the database.
+    var indexDbPromise = openDB("estimatesDb", 1, {
+      upgrade(db, oldVersion, newVersion, transaction) {
+        db.createObjectStore("estimates", { autoIncrement: true });
+      }
+    });
+    var vueInstance = this;
+
+    if (navigator.onLine) {
+      console.log("app online");
+      Promise.all([firebaseConnectedPromise, indexDbPromise]).then(function(
+        responses
+      ) {
+        console.log("Firebase has connected and indexedDB has opened database");
+        console.log(estimatesCollection.doc().id);
+        var indexdb = responses[1];
+
+        var transaction = indexdb.transaction("estimates", "readwrite");
+        var estimateStore = transaction.objectStore("estimates");
+        //clear the estimate store, before storing current firebase data.
+        estimateStore.clear();
+        vueInstance.estimates.forEach(estimate => {
+          console.log("estimate added is", estimate);
+          var db_op_req = estimateStore.add(estimate); // IDBRequest
+        });
+      });
+    } else {
+      console.log("app offline");
+      indexDbPromise.then(function(response) {
+        var indexdb = response;
+        indexdb.getAll("estimates").then(x => {
+          vueInstance.estimates = x;
+        });
+      });
+    }
   },
-  firestore() {
-    return {
-      estimates: estimatesCollection.orderBy("createdAt", "desc")
-    };
-  },
+  //had to remove this as needed a way to fetch promise that was returned when firebase connected
+  //firestore() {
+  // return {
+  //   estimates: estimatesCollection.orderBy("createdAt", "desc")
+  // };
+  //},
   methods: {
     playOrPause(id) {
       estimatesCollection
@@ -308,7 +354,9 @@ export default {
       this.anim = anim;
     },
     saveNew: function(data) {
-      estimatesCollection.add({
+      var generatedId = estimatesCollection.doc().id;
+      estimatesCollection.doc(generatedId).set({
+        id: generatedId,
         name: data.name,
         minEstimate: data.minEstimate,
         maxEstimate: data.maxEstimate,
@@ -357,6 +405,7 @@ export default {
   },
   data() {
     return {
+      loaded: false,
       estimates: [],
       fingerprint: "",
       lastTimeRecorded: 0,
