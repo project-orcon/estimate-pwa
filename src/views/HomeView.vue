@@ -1,12 +1,34 @@
 <template>
   <div id="home">
-    <div class="white--text black">{{fingerprint}}</div>
+    <div class="white--text black"></div>
     <v-tabs color="primary accent-4" background-color="black" dark right style="min-height:100vh">
       <v-tab>To Do</v-tab>
       <v-tab>Complete</v-tab>
-      <v-tab-item v-for="(n,index) in [completedTasks,notCompletedTasks]" :key="index" class="black">
+      <v-tab-item
+        v-for="(n,index) in [completedTasks,notCompletedTasks]"
+        :key="index"
+        class="black"
+      >
         <v-container fluid style="background-color:black">
           <v-row style="max-width:1100px;min-width:320px;width:100%;margin:0 auto" class="black">
+            <v-col v-if="n.length == 0 " class="green--text text-center">
+              <lottie
+                :options="defaultOptions4"
+                :height="200"
+                :width="200"
+                v-on:animCreated="handleAnimation"
+              />
+
+              <p v-if="index==0">
+                No current estimates.
+                <br />Click the add button on the bottom right to create a new estimate.
+              </p>
+              <p v-else>
+                No completed estimates.
+                <br />Click the tick button on an estimate card to mark as complete.
+              </p>
+            </v-col>
+
             <v-col v-for="(item,index) in n" :key="item.id" cols="12" lg="4">
               <v-card
                 class="mx-auto grey darken-4"
@@ -194,6 +216,7 @@ import Lottie from "vue-lottie";
 import animationData from "../assets/claps.json";
 import animationData2 from "../assets/crying.json";
 import animationData3 from "../assets/typing.json";
+import animationChecklist from "../assets/checklist.json";
 import { estimatesCollection } from "../firebase";
 
 export default {
@@ -353,6 +376,9 @@ export default {
       defaultOptions2: { animationData: animationData2 },
       animationSpeed: 1,
       defaultOptions3: { animationData: animationData3 },
+      animationSpeed: 1,
+
+      defaultOptions4: { animationData: animationChecklist },
       animationSpeed: 1
     };
   }
