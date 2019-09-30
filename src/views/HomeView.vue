@@ -388,7 +388,14 @@ export default {
     },
     formatSeconds: function(sec) {
       //format into M:SS
-      return Math.floor(sec / 60) + ":" + ("0" + (sec % 60)).slice(-2);
+      if (sec < 3600) {
+        return Math.floor(sec / 60) + ":" + ("0" + (sec % 60)).slice(-2);
+      } else {
+        var hours = Math.floor(sec / 3600);
+        var minutes = ("0" + Math.floor((sec - hours * 3600) / 60)).slice(-2);
+        var seconds = ("0" + (sec % 60)).slice(-2);
+        return hours + ":" + minutes + ":" + seconds;
+      }
     },
     formatProgress: function(sec, maxEstimateMinutes) {
       //format progress bar (100 = 100%)
