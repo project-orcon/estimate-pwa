@@ -278,6 +278,8 @@ export default {
       console.log("app offline");
       indexDbPromise.then(function(response) {
         var indexdb = response;
+        var transaction = indexdb.transaction("estimates", "readwrite");
+        var estimateStore = transaction.objectStore("estimates");
         indexdb.getAll("estimates").then(x => {
           vueInstance.estimates = x;
         });
@@ -291,6 +293,20 @@ export default {
   // };
   //},
   methods: {
+    saveIndexedDB(estimate) {
+      var indexDbPromise = openDB("estimatesDb", 1, {
+        upgrade(db, oldVersion, newVersion, transaction) {
+          db.createObjectStore("estimates", { autoIncrement: true });
+        }
+      });
+
+      indexDbPromise.then(function(response) {
+        var indexdb = response;
+        var transaction = indexdb.transaction("estimates", "readwrite");
+        var estimateStore = transaction.objectStore("estimates");
+        estimateStore.add(estimate);
+      });
+    },
     playOrPause(id) {
       estimatesCollection
         .doc(id)
@@ -354,6 +370,14 @@ export default {
       this.anim = anim;
     },
     saveNew: function(data) {
+      if (navigator.onLine) {
+        this.saveNewOnline(data);
+        this.saveNewOffline(data);
+      } else {
+        this.saveNewOffline(data);
+      }
+    },
+    saveNewOnline: function(data) {
       var generatedId = estimatesCollection.doc().id;
       estimatesCollection.doc(generatedId).set({
         id: generatedId,
@@ -366,6 +390,22 @@ export default {
         createdAt: new Date(),
         user: this.fingerprint
       });
+      this.dialog = false;
+    },
+    saveNewOffline: function(data) {
+      var newEstimate = {
+        id: "",
+        name: data.name,
+        minEstimate: data.minEstimate,
+        maxEstimate: data.maxEstimate,
+        completed: false,
+        active: false,
+        currentTime: 0,
+        createdAt: new Date(),
+        user: this.fingerprint
+      };
+      this.saveIndexedDB(newEstimate);
+      this.estimates.push(newEstimate);
       this.dialog = false;
     },
     update: function(data) {
@@ -412,6 +452,8 @@ export default {
   },
   data() {
     return {
+      transaction: {},
+      estimateStore: {},
       loaded: false,
       estimates: [],
       fingerprint: "",
