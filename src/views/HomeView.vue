@@ -265,8 +265,22 @@ export default {
         console.log(estimatesCollection.doc().id);
         var indexdb = responses[1];
 
+        //get all the new estimates that have been created.
+
         var transaction = indexdb.transaction("estimates", "readwrite");
         var estimateStore = transaction.objectStore("estimates");
+
+
+        estimateStore.getAll().then(estimates => {
+
+          estimates.forEach(estimate => {
+          if (estimate.id === ""){
+            console.log("ESTIMATE TO ADD IS",estimate)
+            vueInstance.saveNewOnline(estimate);
+          }
+          });
+        });
+
         //clear the estimate store, before storing current firebase data.
         estimateStore.clear();
         vueInstance.estimates.forEach(estimate => {
@@ -307,6 +321,7 @@ export default {
         estimateStore.add(estimate);
       });
     },
+
     playOrPause(id) {
       estimatesCollection
         .doc(id)
@@ -372,14 +387,13 @@ export default {
     saveNew: function(data) {
       if (navigator.onLine) {
         this.saveNewOnline(data);
-        this.saveNewOffline(data);
       } else {
         this.saveNewOffline(data);
       }
     },
     saveNewOnline: function(data) {
       var generatedId = estimatesCollection.doc().id;
-      estimatesCollection.doc(generatedId).set({
+      var estimate={
         id: generatedId,
         name: data.name,
         minEstimate: data.minEstimate,
@@ -389,7 +403,10 @@ export default {
         currentTime: 0,
         createdAt: new Date(),
         user: this.fingerprint
-      });
+      };
+      estimatesCollection.doc(generatedId).set(estimate);
+      console.log("created new firebase record id: ",generatedId)
+      this.saveIndexedDB(estimate);
       this.dialog = false;
     },
     saveNewOffline: function(data) {
