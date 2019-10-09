@@ -62,6 +62,10 @@ export default {
           currentTime: {
             type: "integer",
             "x-display": "hidden"
+          },
+          id: {
+            type:"string",
+            "x-display": "hidden"
           }
         }
       },
