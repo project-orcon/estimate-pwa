@@ -13,7 +13,7 @@
         class="black"
       >
         <v-container fluid style="background-color:black">
-          <v-row style="max-width:1100px;min-width:320px;width:100%;margin:0 auto" class="black">
+          <v-row style="max-width:1100px;min-width:290px;width:100%;margin:0 auto" class="black">
             <v-col v-if="n.length == 0 " class="green--text text-center">
               <lottie
                 :options="defaultOptions4"
@@ -43,7 +43,7 @@
                 <v-list-item three-line>
                   <v-list-item-content>
                     <div class="overline mb-4">Task #{{index+1}}</div>
-                    <v-list-item-title class="headline mb-1">{{item.name}}</v-list-item-title>
+                    <v-list-item-title class="headline mb-1" :title="item.name">{{item.name}}</v-list-item-title>
                     <v-list-item-subtitle>Min Estimate: {{item.minEstimate}} MIN</v-list-item-subtitle>
                     <v-list-item-subtitle>Max Estimate: {{item.maxEstimate}} MIN</v-list-item-subtitle>
                   </v-list-item-content>
@@ -231,7 +231,7 @@ export default {
 
     //.then(() => this.loaded = true);
 
-    this.fingerprinting();
+    
     this.lastTimeRecorded = Date.now();
     window.setInterval(() => {
       //every 200ms check how much time has passed since last time and add to seconds timers
@@ -254,7 +254,12 @@ export default {
 
     this.online = navigator.online;
 
-    this.syncAndLoadData();
+    this.fingerprinting().then( () => {
+      console.log("fingerprint is",this.fingerprint)
+      this.syncAndLoadData();
+    });
+
+ 
   },
   //had to remove this as needed a way to fetch promise that was returned when firebase connected
   //firestore() {
@@ -324,21 +329,28 @@ export default {
       //this.estimates = this.estimates.where("user", "==", this.fingerprint);
     },
     fingerprinting() {
+      const returnPromise= new Promise((resolve,reject) =>{
+
       const Fingerprint2 = window.Fingerprint2;
       var vueInstance = this;
       if (window.requestIdleCallback) {
         requestIdleCallback(() => {
           Fingerprint2.get(function(components) {
             vueInstance.setFingerprint(components);
+            resolve();
           });
         });
       } else {
         setTimeout(function() {
           Fingerprint2.get(function(components) {
             vueInstance.setFingerprint(components);
+            resolve();
           });
         }, 500);
       }
+      });
+
+      return returnPromise;
     },
     complete(id) {
       if (navigator.onLine) {
@@ -521,9 +533,10 @@ export default {
       return this.online;
     },
     syncAndLoadData() {
+      //filter based on fingerprint.
       var firebaseConnectedPromise = this.$bind(
         "estimates",
-        db.collection("estimates")
+        db.collection("estimates").where('user', '==', this.fingerprint)
       );
 
       var indexDbPromise = this.indexDbPromise();
