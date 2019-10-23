@@ -1,6 +1,7 @@
 # estimate-pwa
 A test app to show the offline capabilities of Progressive web apps. The user can create, manage and track current time of estimates both offline and online. Data is stored
 via IndexedDB in the browser and in firebase cloudstore.
+See app at https://estimate-pwa.firebaseapp.com
 
 ## Project setup
 ```
