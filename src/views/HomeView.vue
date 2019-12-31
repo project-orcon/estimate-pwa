@@ -1,20 +1,38 @@
 <template>
   <div id="home">
     <div class="white--text black"></div>
-    <div class="white--text green px-3" v-if="onlineStatus()" >Online</div>
-    <div class="white--text red px-3" v-if="!onlineStatus()">Offline</div>
-    <div class="white--text blue" v-if="synching">Synching</div>
-    <v-tabs color="primary accent-4" background-color="black" dark right style="min-height:100vh">
+    <div class="white--text green darken-3 overline px-2 py-1" v-if="onLine && !synching">
+      Online
+    </div>
+    <div class="white--text red darken-3 overline px-2 py-1" v-if="!onLine && !synching">
+      Offline
+    </div>
+    <div class="white--text blue overline px-2 py-1" v-if="synching">
+      Syncing
+    </div>
+    <v-tabs
+      color="primary accent-4"
+      background-color="black"
+      dark
+      right
+      style="min-height:100vh"
+    >
       <v-tab>To Do</v-tab>
       <v-tab>Complete</v-tab>
       <v-tab-item
-        v-for="(n,index) in [completedTasks,notCompletedTasks]"
+        v-for="(n, index) in [completedTasks, notCompletedTasks]"
         :key="index"
         class="black"
       >
         <v-container fluid style="background-color:black">
-          <v-row style="max-width:1100px;min-width:290px;width:100%;margin:0 auto" class="black">
-            <v-col v-if="n.length == 0 " class="green--text text-center">
+          <v-row
+            style="max-width:1100px;min-width:290px;width:100%;margin:0 auto"
+            class="black"
+          >
+            <v-col
+              v-if="n.length == 0 && !synching"
+              class="green--text text-center"
+            >
               <lottie
                 :options="defaultOptions4"
                 :height="200"
@@ -22,17 +40,19 @@
                 v-on:animCreated="handleAnimation"
               />
 
-              <p v-if="index==0">
+              <p v-if="index == 0">
                 No current estimates.
-                <br />Click the add button on the bottom right to create a new estimate.
+                <br />Click the add button on the bottom right to create a new
+                estimate.
               </p>
               <p v-else>
                 No completed estimates.
-                <br />Click the tick button on an estimate card to mark as complete.
+                <br />Click the tick button on an estimate card to mark as
+                complete.
               </p>
             </v-col>
 
-            <v-col v-for="(item,index) in n" :key="item.id" cols="12" lg="4">
+            <v-col v-for="(item, index) in n" :key="item.id" cols="12" lg="4">
               <v-card
                 class="mx-auto grey darken-4"
                 max-width="344"
@@ -42,10 +62,20 @@
               >
                 <v-list-item three-line>
                   <v-list-item-content>
-                    <div class="overline mb-4">Task #{{index+1}}</div>
-                    <v-list-item-title class="headline mb-1" :title="item.name">{{item.name}}</v-list-item-title>
-                    <v-list-item-subtitle>Min Estimate: {{item.minEstimate}} MIN</v-list-item-subtitle>
-                    <v-list-item-subtitle>Max Estimate: {{item.maxEstimate}} MIN</v-list-item-subtitle>
+                    <div class="overline mb-4">Task #{{ index + 1 }}</div>
+                    <v-list-item-title
+                      class="title font-weight-light mb-1"
+                      :title="item.name"
+                      >{{ item.name }}</v-list-item-title
+                    >
+                    <v-list-item-subtitle
+                      >Min Estimate:
+                      {{ item.minEstimate }} MIN</v-list-item-subtitle
+                    >
+                    <v-list-item-subtitle
+                      >Max Estimate:
+                      {{ item.maxEstimate }} MIN</v-list-item-subtitle
+                    >
                   </v-list-item-content>
                   <v-list-item-avatar>
                     <v-btn
@@ -81,7 +111,9 @@
                   </v-list-item-avatar>
                 </v-list-item>
                 <v-card-actions>
-                  <v-btn text>Elapsed Time: {{formatSeconds(item.currentTime)}}</v-btn>
+                  <v-btn text
+                    >Elapsed Time: {{ formatSeconds(item.currentTime) }}</v-btn
+                  >
                   <v-btn
                     elevation="0"
                     absolute
@@ -94,12 +126,12 @@
                     style="margin-top:-10px"
                     :disabled="item.completed ? true : false"
                   >
-                    <v-icon>{{item.active? "pause":"play_arrow"}}</v-icon>
+                    <v-icon>{{ item.active ? "pause" : "play_arrow" }}</v-icon>
                   </v-btn>
                 </v-card-actions>
                 <v-progress-linear
                   color="green"
-                  :value="formatProgress(item.currentTime,item.maxEstimate)"
+                  :value="formatProgress(item.currentTime, item.maxEstimate)"
                 ></v-progress-linear>
               </v-card>
             </v-col>
@@ -109,7 +141,7 @@
     </v-tabs>
     <v-container fluid>
       <v-row style="margin:0 auto">
-        <v-btn fab fixed bottom right color="primary" @click="dialog=!dialog">
+        <v-btn fab fixed bottom right color="primary" @click="dialog = !dialog">
           <v-icon>add</v-icon>
         </v-btn>
         <v-overlay :opacity="0.9" v-model="dialog">
@@ -119,7 +151,7 @@
             dark
             hide-overlay
             transition="dialog-bottom-transition"
-            @click="dialog=false"
+            @click="dialog = false"
           >
             <new-task style="max-width:800px;" @saved="saveNew"></new-task>
           </v-dialog>
@@ -131,9 +163,13 @@
             dark
             hide-overlay
             transition="dialog-bottom-transition"
-            @click="dialog=false"
+            @click="dialog = false"
           >
-            <edit-task style="max-width:800px;" @saved="update" :data-object="currentEstimate"></edit-task>
+            <edit-task
+              style="max-width:800px;"
+              @saved="update"
+              :data-object="currentEstimate"
+            ></edit-task>
           </v-dialog>
         </v-overlay>
         <v-overlay :opacity="0.9" v-model="congratsDialog">
@@ -155,7 +191,9 @@
                 />
               </div>
               <br />
-              <v-card-text class="white--text">Congratulations on meeting your estimate!!!</v-card-text>
+              <v-card-text class="white--text"
+                >Congratulations on meeting your estimate!!!</v-card-text
+              >
             </v-card>
           </v-dialog>
         </v-overlay>
@@ -202,7 +240,9 @@
                 />
               </div>
               <br />
-              <v-card-text class="white--text">Another task completed! You're so productive!</v-card-text>
+              <v-card-text class="white--text"
+                >Another task completed! You're so productive!</v-card-text
+              >
             </v-card>
           </v-dialog>
         </v-overlay>
@@ -231,7 +271,15 @@ export default {
 
     //.then(() => this.loaded = true);
 
-    
+    //keeps track of connection
+
+    window.addEventListener("online", () => {
+      this.updateConnectionStatus();
+    });
+    window.addEventListener("offline", () => {
+      this.updateConnectionStatus();
+    });
+
     this.lastTimeRecorded = Date.now();
     window.setInterval(() => {
       //every 200ms check how much time has passed since last time and add to seconds timers
@@ -241,8 +289,10 @@ export default {
         this.estimates.forEach(x => {
           if (x.active) {
             var time = x.currentTime + Math.floor(TimeDiff);
-            if (navigator.onLine) {
-              estimatesCollection.doc(x.id).update({ currentTime: time });
+            x.currentTime = time;
+            if (this.onLine) {
+              //estimatesCollection.doc(x.id).update(x);
+              this.updateOnline(x);
             } else {
               x.currentTime = time;
               this.updateOffline(x);
@@ -252,14 +302,10 @@ export default {
       }
     }, 200);
 
-    this.online = navigator.online;
-
-    this.fingerprinting().then( () => {
-      console.log("fingerprint is",this.fingerprint)
+    this.fingerprinting().then(() => {
+      console.log("fingerprint is", this.fingerprint);
       this.syncAndLoadData();
     });
-
- 
   },
   //had to remove this as needed a way to fetch promise that was returned when firebase connected
   //firestore() {
@@ -268,6 +314,12 @@ export default {
   // };
   //},
   methods: {
+    updateConnectionStatus() {
+      console.log("detected change");
+      this.onLine = navigator.onLine; // this method
+
+      this.syncAndLoadData();
+    },
     indexDbPromise: function() {
       return openDB("estimatesDb", 1, {
         upgrade(db, oldVersion, newVersion, transaction) {
@@ -297,7 +349,7 @@ export default {
     },
 
     playOrPause(id) {
-      if (navigator.onLine) {
+      if (this.onLine) {
         this.playOrPauseOnline(id);
       } else {
         this.playOrPauseOffline(id);
@@ -329,31 +381,30 @@ export default {
       //this.estimates = this.estimates.where("user", "==", this.fingerprint);
     },
     fingerprinting() {
-      const returnPromise= new Promise((resolve,reject) =>{
-
-      const Fingerprint2 = window.Fingerprint2;
-      var vueInstance = this;
-      if (window.requestIdleCallback) {
-        requestIdleCallback(() => {
-          Fingerprint2.get(function(components) {
-            vueInstance.setFingerprint(components);
-            resolve();
+      const returnPromise = new Promise((resolve, reject) => {
+        const Fingerprint2 = window.Fingerprint2;
+        var vueInstance = this;
+        if (window.requestIdleCallback) {
+          requestIdleCallback(() => {
+            Fingerprint2.get(function(components) {
+              vueInstance.setFingerprint(components);
+              resolve();
+            });
           });
-        });
-      } else {
-        setTimeout(function() {
-          Fingerprint2.get(function(components) {
-            vueInstance.setFingerprint(components);
-            resolve();
-          });
-        }, 500);
-      }
+        } else {
+          setTimeout(function() {
+            Fingerprint2.get(function(components) {
+              vueInstance.setFingerprint(components);
+              resolve();
+            });
+          }, 500);
+        }
       });
 
       return returnPromise;
     },
     complete(id) {
-      if (navigator.onLine) {
+      if (this.onLine) {
         this.completeOnline(id);
       } else {
         this.completeOffline(id);
@@ -362,6 +413,7 @@ export default {
     completeOffline: function(id) {
       var index = this.estimates.findIndex(x => x.id == id);
       this.estimates[index].completed = true;
+      this.estimates[index].active = false;
       this.updateOffline(this.estimates[index]);
     },
     completeOnline: function(id) {
@@ -372,6 +424,7 @@ export default {
         .get()
         .then(snapshot => {
           const data = snapshot.data();
+          this.saveIndexedDB(data);
           if (this.rewardFactor < Math.random()) {
             if (data.currentTime <= data.maxEstimate * 60) {
               if (0.5 < Math.random()) {
@@ -389,7 +442,7 @@ export default {
       this.anim = anim;
     },
     saveNew: function(data) {
-      if (navigator.onLine) {
+      if (this.onLine) {
         this.saveNewOnline(data);
       } else {
         this.saveNewOffline(data);
@@ -402,10 +455,10 @@ export default {
         name: data.name,
         minEstimate: data.minEstimate,
         maxEstimate: data.maxEstimate,
-        completed: false,
-        active: false,
-        currentTime: 0,
-        createdAt: new Date(),
+        completed: data.completed || false,
+        active: data.active || false,
+        currentTime: data.currentTime || 0,
+        createdAt: data.createdAt || new Date(),
         user: this.fingerprint
       };
 
@@ -437,7 +490,7 @@ export default {
       this.dialog = false;
     },
     update: function(data) {
-      if (navigator.onLine) {
+      if (this.onLine) {
         this.updateOnline(data);
         this.editDialog = false;
       } else {
@@ -449,7 +502,6 @@ export default {
       console.log("attempting to update id of ", data.id);
       estimatesCollection.doc(data.id).update(data);
       this.saveIndexedDB(data);
-
     },
     updateOffline: function(data) {
       //don't include if already in array
@@ -464,10 +516,9 @@ export default {
       this.saveIndexedDB(data);
       var index = this.estimates.findIndex(x => x.id == data.id);
       this.estimates[index] = data;
-      
     },
     edit: function(id) {
-      if (navigator.onLine) {
+      if (this.onLine) {
         this.editOnline(id);
       } else {
         this.editOffline(id);
@@ -490,13 +541,14 @@ export default {
       this.editDialog = true;
     },
     del: function(id) {
-      if (navigator.onLine) {
+      if (this.onLine) {
         this.delOnline(id);
       } else {
         this.delOffline(id);
       }
     },
     delOnline: function(id) {
+      console.log("now deleting id in delOnline func", id);
       estimatesCollection.doc(id).delete();
       this.deleteIndexedDB(id);
     },
@@ -527,117 +579,128 @@ export default {
       //format progress bar (100 = 100%)
       return (sec / (maxEstimateMinutes * 60)) * 100;
     },
-    //function needs to be used in page html else so online is updated every page redraw
-    onlineStatus() {
-      this.online = navigator.onLine;
-      return this.online;
-    },
+
     syncAndLoadData() {
       //filter based on fingerprint.
+      this.synching=true;
       var firebaseConnectedPromise = this.$bind(
         "estimates",
-        db.collection("estimates").where('user', '==', this.fingerprint)
+        db.collection("estimates").where("user", "==", this.fingerprint)
       );
 
       var indexDbPromise = this.indexDbPromise();
       var vueInstance = this;
 
-      if (navigator.onLine) {
+      if (this.onLine) {
         console.log("app online");
-        Promise.all([firebaseConnectedPromise, indexDbPromise]).then(function(
-          responses
-        ) {
-          console.log(
-            "Firebase has connected and indexedDB has opened database"
-          );
-          console.log(estimatesCollection.doc().id);
+        Promise.all([firebaseConnectedPromise, indexDbPromise]).then(
+          responses => {
+            console.log(
+              "Firebase has connected and indexedDB has opened database"
+            );
+            console.log(estimatesCollection.doc().id);
 
-          var indexdb = responses[1];
+            var indexdb = responses[1];
 
-          //get all the new estimates that have been created.
+            //get all the new estimates that have been created.
 
-          var transaction = indexdb.transaction("estimates", "readwrite");
-          var estimateStore = transaction.objectStore("estimates");
+            var transaction = indexdb.transaction("estimates", "readwrite");
+            var estimateStore = transaction.objectStore("estimates");
 
-          //retrieve changes that have been made offline and stored in local storage.
-          //arrays of ids
-          var addedOffline = JSON.parse(localStorage.getItem("addedOffline"));
-          var editedOffline = JSON.parse(localStorage.getItem("editedOffline"));
-          var deletedOffline = JSON.parse(
-            localStorage.getItem("deletedOffline")
-          );
+            //retrieve changes that have been made offline and stored in local storage.
+            //arrays of ids
+            var addedOffline = JSON.parse(localStorage.getItem("addedOffline"));
+            var editedOffline = JSON.parse(
+              localStorage.getItem("editedOffline")
+            );
+            var deletedOffline = JSON.parse(
+              localStorage.getItem("deletedOffline")
+            );
 
-          console.log("the deleted offline array is", deletedOffline);
+            console.log("the deleted offline array is", deletedOffline);
 
-          if (addedOffline) {
-            estimateStore.getAll().then(estimates => {
-              estimates.forEach(estimate => {
-                if (addedOffline.includes(estimate.id)) {
-                  console.log("ESTIMATE TO ADD IS", estimate);
-                  var newId = vueInstance.saveNewOnline(estimate);
-                  //adding a new estimate will change the id of the estimate (generated by firebase)
-                  //so the editedOffline and deletedOffline arrays may need to be updated
-                  if (editedOffline) {
-                    editedOffline = editedOffline.map(x =>
-                      x == estimate.id ? newId : x
-                    );
-                  }
-                  if (deletedOffline) {
-                    deletedOffline = deletedOffline.map(x =>
-                      x == estimate.id ? newId : x
-                    );
-                  }
-                }
+            let promiseChain = Promise.resolve();
+
+            if (addedOffline) {
+              promiseChain = promiseChain.then(
+                estimateStore.getAll().then(estimates => {
+                  estimates.forEach(estimate => {
+                    if (addedOffline.includes(estimate.id)) {
+                      console.log("ESTIMATE TO ADD IS", estimate);
+                      var newId = vueInstance.saveNewOnline(estimate);
+                      //adding a new estimate will change the id of the estimate (generated by firebase)
+                      //so the editedOffline and deletedOffline arrays may need to be updated
+                      if (editedOffline) {
+                        editedOffline = editedOffline.map(x =>
+                          x == estimate.id ? newId : x
+                        );
+                      }
+                      if (deletedOffline) {
+                        deletedOffline = deletedOffline.map(x =>
+                          x == estimate.id ? newId : x
+                        );
+                      }
+                    }
+                  });
+                })
+              );
+            }
+
+            if (editedOffline) {
+              console.log("edited offline", editedOffline);
+              //update firebase with all the edited offline estimates.
+              promiseChain = promiseChain.then(
+                estimateStore.getAll().then(estimates => {
+                  estimates.forEach(estimate => {
+                    if (editedOffline.includes(estimate.id)) {
+                      console.log("ESTIMATE TO EDIT IS", estimate);
+                      vueInstance.updateOnline(estimate);
+                    }
+                  });
+                })
+              );
+            }
+
+            promiseChain.then(() => {
+              console.log("made it into connected promise area");
+
+              if (deletedOffline) {
+                deletedOffline.forEach(x => {
+                  console.log("currently deleting id", x);
+                  this.delOffline(x);
+                });
+              }
+              //clear local storage after updating
+              localStorage.removeItem("addedOffline");
+              localStorage.removeItem("editedOffline");
+              localStorage.removeItem("deletedOffline");
+
+              this.deletedOffline = [];
+              this.editedOffline = [];
+              this.addedOffline = [];
+
+              //clear the IDB estimate store, before storing current firebase data.
+              estimateStore.clear();
+              vueInstance.estimates.forEach(estimate => {
+                console.log("estimate added is", estimate);
+                var db_op_req = estimateStore.add(estimate); // IDBRequest
               });
+
+              this.synching=false;
             });
           }
-
-          if (editedOffline) {
-            console.log("edited offline", editedOffline);
-            //update firebase with all the edited offline estimates.
-            estimateStore.getAll().then(estimates => {
-              estimates.forEach(estimate => {
-                if (editedOffline.includes(estimate.id)) {
-                  console.log("ESTIMATE TO EDIT IS", estimate);
-                  vueInstance.updateOnline(estimate);
-                }
-              });
-            });
-          }
-
-          if (deletedOffline) {
-            //update firebase with all the deleted offline estimates.
-            estimateStore.getAll().then(estimates => {
-              estimates.forEach(estimate => {
-                if (deletedOffline.includes(estimate.id)) {
-                  console.log("ESTIMATE TO DELETE IS", estimate);
-                  vueInstance.delOnline(estimate.id);
-                }
-              });
-            });
-          }
-
-          //clear local storage after updating
-          localStorage.removeItem("addedOffline");
-          localStorage.removeItem("editedOffline");
-          localStorage.removeItem("deletedOffline");
-
-          //clear the IDB estimate store, before storing current firebase data.
-          estimateStore.clear();
-          vueInstance.estimates.forEach(estimate => {
-            console.log("estimate added is", estimate);
-            var db_op_req = estimateStore.add(estimate); // IDBRequest
-          });
-        });
+        );
       } else {
         console.log("app offline");
-        indexDbPromise.then(function(response) {
+        indexDbPromise.then((response) =>{
           var indexdb = response;
           var transaction = indexdb.transaction("estimates", "readwrite");
           var estimateStore = transaction.objectStore("estimates");
           indexdb.getAll("estimates").then(x => {
             vueInstance.estimates = x;
           });
+
+          this.synching=false;
         });
       }
     }
@@ -650,21 +713,11 @@ export default {
       return this.estimates.filter(x => x.completed == true);
     }
   },
-  watch: {
-    // whenever app transitions from offline to online run update script.
-    online: function(newState, oldState) {
-      if (newState == true) {
-        //update
-        this.synching = true;
-        this.syncAndLoadData();
-        this.synching = false;
-      }
-    }
-  },
+
   data() {
     return {
-      synching: true,
-      online: false,
+      synching: false,
+      onLine: navigator.onLine,
       addedOffline: [],
       editedOffline: [],
       deletedOffline: [],
