@@ -1,8 +1,8 @@
 <template>
   <v-app>
-    <v-app-bar app style="background-color:#181818" >
+    <v-app-bar app style="background-color:#ffffff" >
       <v-toolbar-title class="headline green--text  " style="width:100%;" >
-        <div><v-icon left style="margin-top:-6px;font-size:25px" color="blue" >  timer</v-icon><span class="font-weight-light blue--text">ESTIMATE XYZ</span></div>
+        <div><v-icon left style="margin-top:-6px;font-size:25px" color="black" >  timer</v-icon><span class=" black--text">ESTIMATE XYZ</span></div>
       </v-toolbar-title>
       <v-spacer></v-spacer>
     </v-app-bar>

@@ -283,12 +283,12 @@ export default {
     this.lastTimeRecorded = Date.now();
     window.setInterval(() => {
       //every 200ms check how much time has passed since last time and add to seconds timers
-      var TimeDiff = (Date.now() - this.lastTimeRecorded) / 1000;
+      let TimeDiff = (Date.now() - this.lastTimeRecorded) / 1000;
       if (TimeDiff > 1) {
         this.lastTimeRecorded = Date.now();
         this.estimates.forEach(x => {
           if (x.active) {
-            var time = x.currentTime + Math.floor(TimeDiff);
+            let time = x.currentTime + Math.floor(TimeDiff);
             x.currentTime = time;
             if (this.onLine) {
               //estimatesCollection.doc(x.id).update(x);
@@ -328,22 +328,22 @@ export default {
       });
     },
     saveIndexedDB(estimate) {
-      var indexDbPromise = this.indexDbPromise();
+      let indexDbPromise = this.indexDbPromise();
 
       indexDbPromise.then(function(response) {
-        var indexdb = response;
-        var transaction = indexdb.transaction("estimates", "readwrite");
-        var estimateStore = transaction.objectStore("estimates");
+        let indexdb = response;
+        let transaction = indexdb.transaction("estimates", "readwrite");
+        let estimateStore = transaction.objectStore("estimates");
         estimateStore.put(estimate);
       });
     },
     deleteIndexedDB(id) {
-      var indexDbPromise = this.indexDbPromise();
+      let indexDbPromise = this.indexDbPromise();
 
       indexDbPromise.then(function(response) {
-        var indexdb = response;
-        var transaction = indexdb.transaction("estimates", "readwrite");
-        var estimateStore = transaction.objectStore("estimates");
+        let indexdb = response;
+        let transaction = indexdb.transaction("estimates", "readwrite");
+        let estimateStore = transaction.objectStore("estimates");
         estimateStore.delete(id);
       });
     },
@@ -356,7 +356,7 @@ export default {
       }
     },
     playOrPauseOffline(id) {
-      var index = this.estimates.findIndex(x => x.id == id);
+      let index = this.estimates.findIndex(x => x.id == id);
       this.estimates[index].active = !this.estimates[index].active;
     },
     playOrPauseOnline(id) {
@@ -374,7 +374,7 @@ export default {
     },
     setFingerprint(components) {
       console.log("hash is", components); // an array of components: {key: ..., value: ...}
-      var values = components.map(function(component) {
+      let values = components.map(function(component) {
         return component.value;
       });
       this.fingerprint = Fingerprint2.x64hash128(values.join(""), 31);
@@ -383,7 +383,7 @@ export default {
     fingerprinting() {
       const returnPromise = new Promise((resolve, reject) => {
         const Fingerprint2 = window.Fingerprint2;
-        var vueInstance = this;
+        let vueInstance = this;
         if (window.requestIdleCallback) {
           requestIdleCallback(() => {
             Fingerprint2.get(function(components) {
@@ -411,7 +411,7 @@ export default {
       }
     },
     completeOffline: function(id) {
-      var index = this.estimates.findIndex(x => x.id == id);
+      let index = this.estimates.findIndex(x => x.id == id);
       this.estimates[index].completed = true;
       this.estimates[index].active = false;
       this.updateOffline(this.estimates[index]);
@@ -449,8 +449,8 @@ export default {
       }
     },
     saveNewOnline: function(data) {
-      var generatedId = estimatesCollection.doc().id;
-      var estimate = {
+      let generatedId = estimatesCollection.doc().id;
+      let estimate = {
         id: generatedId,
         name: data.name,
         minEstimate: data.minEstimate,
@@ -471,8 +471,8 @@ export default {
       return generatedId;
     },
     saveNewOffline: function(data) {
-      var timestamp = new Date().getUTCMilliseconds();
-      var newEstimate = {
+      let timestamp = new Date().getUTCMilliseconds();
+      let newEstimate = {
         id: timestamp,
         name: data.name,
         minEstimate: data.minEstimate,
@@ -514,7 +514,7 @@ export default {
         console.log("new data added to editedOffline", this.editedOffline);
       }
       this.saveIndexedDB(data);
-      var index = this.estimates.findIndex(x => x.id == data.id);
+      let index = this.estimates.findIndex(x => x.id == data.id);
       this.estimates[index] = data;
     },
     edit: function(id) {
@@ -560,7 +560,7 @@ export default {
         "deletedOffline",
         JSON.stringify(this.deletedOffline)
       );
-      var index = this.estimates.findIndex(x => x.id == id);
+      let index = this.estimates.findIndex(x => x.id == id);
       this.estimates.splice(index, 1);
     },
 
@@ -569,9 +569,9 @@ export default {
       if (sec < 3600) {
         return Math.floor(sec / 60) + ":" + ("0" + (sec % 60)).slice(-2);
       } else {
-        var hours = Math.floor(sec / 3600);
-        var minutes = ("0" + Math.floor((sec - hours * 3600) / 60)).slice(-2);
-        var seconds = ("0" + (sec % 60)).slice(-2);
+        let hours = Math.floor(sec / 3600);
+        let minutes = ("0" + Math.floor((sec - hours * 3600) / 60)).slice(-2);
+        let seconds = ("0" + (sec % 60)).slice(-2);
         return hours + ":" + minutes + ":" + seconds;
       }
     },
@@ -583,13 +583,13 @@ export default {
     syncAndLoadData() {
       //filter based on fingerprint.
       this.synching=true;
-      var firebaseConnectedPromise = this.$bind(
+      let firebaseConnectedPromise = this.$bind(
         "estimates",
         db.collection("estimates").where("user", "==", this.fingerprint)
       );
 
-      var indexDbPromise = this.indexDbPromise();
-      var vueInstance = this;
+      let indexDbPromise = this.indexDbPromise();
+      let vueInstance = this;
 
       if (this.onLine) {
         console.log("app online");
@@ -600,20 +600,20 @@ export default {
             );
             console.log(estimatesCollection.doc().id);
 
-            var indexdb = responses[1];
+            let indexdb = responses[1];
 
             //get all the new estimates that have been created.
 
-            var transaction = indexdb.transaction("estimates", "readwrite");
-            var estimateStore = transaction.objectStore("estimates");
+            let transaction = indexdb.transaction("estimates", "readwrite");
+            let estimateStore = transaction.objectStore("estimates");
 
             //retrieve changes that have been made offline and stored in local storage.
             //arrays of ids
-            var addedOffline = JSON.parse(localStorage.getItem("addedOffline"));
-            var editedOffline = JSON.parse(
+            let addedOffline = JSON.parse(localStorage.getItem("addedOffline"));
+            let editedOffline = JSON.parse(
               localStorage.getItem("editedOffline")
             );
-            var deletedOffline = JSON.parse(
+            let deletedOffline = JSON.parse(
               localStorage.getItem("deletedOffline")
             );
 
@@ -627,7 +627,7 @@ export default {
                   estimates.forEach(estimate => {
                     if (addedOffline.includes(estimate.id)) {
                       console.log("ESTIMATE TO ADD IS", estimate);
-                      var newId = vueInstance.saveNewOnline(estimate);
+                      let newId = vueInstance.saveNewOnline(estimate);
                       //adding a new estimate will change the id of the estimate (generated by firebase)
                       //so the editedOffline and deletedOffline arrays may need to be updated
                       if (editedOffline) {
@@ -661,7 +661,18 @@ export default {
               );
             }
 
-            promiseChain.then(() => {
+            //need to connect to indexDB again due to safari closing the connection (chrome is fine)
+
+            promiseChain.then(this.indexDbPromise()).then((res) => {
+
+             let indexdb1 = res;
+             console.log(indexdb1);
+
+            //get all the new estimates that have been created.
+
+             let transaction1 = indexdb1.transaction("estimates", "readwrite");
+             let estimateStore1 = transaction1.objectStore("estimates");
+
               console.log("made it into connected promise area");
 
               if (deletedOffline) {
@@ -680,10 +691,12 @@ export default {
               this.addedOffline = [];
 
               //clear the IDB estimate store, before storing current firebase data.
-              estimateStore.clear();
+
+
+              estimateStore1.clear();
               vueInstance.estimates.forEach(estimate => {
                 console.log("estimate added is", estimate);
-                var db_op_req = estimateStore.add(estimate); // IDBRequest
+                let db_op_req = estimateStore1.add(estimate); // IDBRequest
               });
 
               this.synching=false;
@@ -693,9 +706,9 @@ export default {
       } else {
         console.log("app offline");
         indexDbPromise.then((response) =>{
-          var indexdb = response;
-          var transaction = indexdb.transaction("estimates", "readwrite");
-          var estimateStore = transaction.objectStore("estimates");
+          let indexdb = response;
+          let transaction = indexdb.transaction("estimates", "readwrite");
+          let estimateStore = transaction.objectStore("estimates");
           indexdb.getAll("estimates").then(x => {
             vueInstance.estimates = x;
           });
